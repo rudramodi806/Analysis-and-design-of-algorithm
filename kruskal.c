@@ -1,101 +1,72 @@
 #include <stdio.h>
 #include <stdlib.h>
 #define MAX 100
+#define INF 99999
 
-typedef struct {
-    int src, dest, weight;
-} Edge;
+int parent[MAX];
 
-Edge edgeList[MAX];
-int parent[MAX], treeRank[MAX];
-
-// DSU Find with Path Compression
-int findSet(int vertex) {
-    if (parent[vertex] != vertex)
-        parent[vertex] = findSet(parent[vertex]);
-    return parent[vertex];
+int find(int i) {
+    while (parent[i] != i)
+        i = parent[i];
+    return i;
 }
 
-// DSU Union by Rank
-void unionSets(int setA, int setB) {
-    int rootA = findSet(setA);
-    int rootB = findSet(setB);
-
-    if (rootA != rootB) {
-        if (treeRank[rootA] > treeRank[rootB]) {
-            parent[rootB] = rootA;
-        } else if (treeRank[rootA] < treeRank[rootB]) {
-            parent[rootA] = rootB;
-        } else {
-            parent[rootB] = rootA;
-            treeRank[rootA]++;
-        }
-    }
+void union_set(int i, int j) {
+    int a = find(i);
+    int b = find(j);
+    parent[a] = b;
 }
 
-// Comparator for qsort
-int compareEdges(const void *a, const void *b) {
-    Edge *edgeA = (Edge *)a;
-    Edge *edgeB = (Edge *)b;
-    return edgeA->weight - edgeB->weight;
-}
+void kruskal(int cost[MAX][MAX], int n) {
+    int i, j, u, v, a, b, min, edges = 0, total = 0;
 
-// Kruskal's Algorithm
-int kruskalMST(int numVertices, int numEdges) {
-    // Initialize DSU
-    for (int i = 0; i < numVertices; i++) {
+    for (i = 0; i < n; i++)
         parent[i] = i;
-        treeRank[i] = 0;
-    }
 
-    // Sort edges by weight
-    qsort(edgeList, numEdges, sizeof(Edge), compareEdges);
+    printf("\nEdges in Kruskal's MST:\n");
+    while (edges < n - 1) {
+        min = INF;
 
-    int minCost = 0, edgesUsed = 0;
-
-    for (int i = 0; i < numEdges && edgesUsed < numVertices - 1; i++) {
-        int src = edgeList[i].src;
-        int dest = edgeList[i].dest;
-        int weight = edgeList[i].weight;
-
-        if (findSet(src) != findSet(dest)) {
-            unionSets(src, dest);
-            minCost += weight;
-            edgesUsed++;
-            printf("Edge selected: (%d -> %d) with cost %d\n", src + 1, dest + 1, weight);
+        for (i = 0; i < n; i++) {
+            for (j = 0; j < n; j++) {
+                if (cost[i][j] < min && i != j) {
+                    min = cost[i][j];
+                    a = u = i;
+                    b = v = j;
+                }
+            }
         }
-    }
 
-    if (edgesUsed != numVertices - 1) {
-        printf("Graph is disconnected. MST not possible.\n");
-        return -1;
-    }
+        u = find(u);
+        v = find(v);
 
-    return minCost;
+        if (u != v) {
+            union_set(u, v);
+            printf("%d - %d : %d\n", a, b, min);
+            total += min;
+            edges++;
+        }
+
+        cost[a][b] = cost[b][a] = INF; // Mark edge as used
+    }
+    printf("Total cost of Kruskal's MST: %d\n", total);
 }
 
 int main() {
-    int numVertices, numEdges;
+    int n, i, j;
+    int cost[MAX][MAX];
+
     printf("Enter the number of vertices: ");
-    scanf("%d", &numVertices);
+    scanf("%d", &n);
 
-    printf("Enter the number of edges: ");
-    scanf("%d", &numEdges);
-
-    printf("Enter the edges (src dest weight) [Vertices numbered from 1 to %d]:\n", numVertices);
-    for (int i = 0; i < numEdges; i++) {
-        int src, dest, weight;
-        scanf("%d %d %d", &src, &dest, &weight);
-        src--; dest--; // convert to 0-based
-        edgeList[i].src = src;
-        edgeList[i].dest = dest;
-        edgeList[i].weight = weight;
+    printf("Enter the adjacency matrix (Use %d for no edge):\n", INF);
+    for (i = 0; i < n; i++) {
+        for (j = 0; j < n; j++) {
+            scanf("%d", &cost[i][j]);
+        }
     }
 
-    printf("\n-------------- Kruskal's Algorithm --------------\n");
-    int totalKruskalCost = kruskalMST(numVertices, numEdges);
-    if (totalKruskalCost != -1)
-        printf("Total cost using Kruskal's algorithm: %d\n", totalKruskalCost);
+    kruskal(cost, n);
 
     return 0;
 }
