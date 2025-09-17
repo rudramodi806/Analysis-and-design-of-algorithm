@@ -28,6 +28,7 @@ int binarySearch(int n, int num) {
             return no_of_Comparison;
         }
         else if (arr[mid] < num) {
+            left = mid + 1;
         }
         else {
             right = mid - 1;
